@@ -493,7 +493,7 @@ bool actuacionIngeniero(unsigned char celdaJ_inicial, unsigned char celdaJ_fin,
     break;
 
   case IDLE:
-    if (celdaJ_inicial == 'X' and monitor.getLevel() == 7 or
+    if (celdaJ_inicial == 'X' and monitor.getLevel() == 6 or
         monitor.getLevel() == 1) { // Casilla Rosa (Recarga)
       monitor.get_entidad(0)->increaseBateria(10);
     }
@@ -528,6 +528,7 @@ bool actuacionIngeniero(unsigned char celdaJ_inicial, unsigned char celdaJ_fin,
     unsigned char celda = monitor.getMapa()->getCelda(f, c);
     if (celda == 'A') {
       monitor.addMensaje("Ingeniero", "DIG: No aplicable sobre agua");
+      monitor.addFailedAction(f, c);
     } else if (alt > 1) {
       monitor.getMapa()->setAltura(f, c, alt - 1);
       monitor.get_entidad(0)->getComportamiento()->mapaCotas[f][c] = alt - 1;
@@ -546,6 +547,7 @@ bool actuacionIngeniero(unsigned char celdaJ_inicial, unsigned char celdaJ_fin,
     unsigned char celda = monitor.getMapa()->getCelda(f, c);
     if (celda == 'A') {
       monitor.addMensaje("Ingeniero", "RAISE: No aplicable sobre agua");
+      monitor.addFailedAction(f, c);
     } else if (alt < 9) {
       monitor.getMapa()->setAltura(f, c, alt + 1);
       monitor.get_entidad(0)->getComportamiento()->mapaCotas[f][c] = alt + 1;
@@ -769,7 +771,7 @@ bool actuacionTecnico(unsigned char celdaJ_inicial, unsigned char celdaJ_fin,
   case IDLE:
     if (celdaJ_inicial == 'X' and
         (monitor.getLevel() == 1 or
-         monitor.getLevel() == 7)) { // Casilla Rosa (Recarga)
+         monitor.getLevel() == 6)) { // Casilla Rosa (Recarga)
       monitor.get_entidad(1)->increaseBateria(10);
     }
 
