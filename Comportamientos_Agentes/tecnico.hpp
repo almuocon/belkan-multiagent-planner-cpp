@@ -1,13 +1,15 @@
 #ifndef COMPORTAMIENTOTECNICO_H
 #define COMPORTAMIENTOTECNICO_H
 
-#include <chrono>
-#include <time.h>
-#include <thread>
+#include <cstdlib>
+#include <vector>
 #include <list>
+#include <map>
+#include <set>
+#include <thread>
 
 #include "comportamientos/comportamiento.hpp"
-
+using namespace std;
 // =========================================================================
 // DOCUMENTACIÓN PARA ESTUDIANTES
 // =========================================================================
@@ -32,7 +34,9 @@ public:
    * @param size Tamaño del mapa (si es 0, se inicializa más tarde)
    */
   ComportamientoTecnico(unsigned int size = 0) : Comportamiento(size) {
-    // Inicializar Variables de Estado
+    last_action = IDLE;
+    tiene_zapatillas = false;
+    girosOrientacion = 0;
   }
 
   /**
@@ -43,8 +47,17 @@ public:
   ComportamientoTecnico(std::vector<std::vector<unsigned char>> mapaR, 
                        std::vector<std::vector<unsigned char>> mapaC): 
                        Comportamiento(mapaR, mapaC) {
-    // Inicializar Variables de Estado
+    hayPlan = false;
+    tiene_zapatillas = false;
 
+    faseActual = PARADO;
+    accionesMov.clear();
+    fIngeniero = -1;
+    cIngeniero = -1;
+    destinoF = -1;
+    destinoC = -1;
+    esperando_install = false;
+    
   }
 
   ComportamientoTecnico(const ComportamientoTecnico &comport): Comportamiento(comport) {}
@@ -67,7 +80,78 @@ public:
   // =========================================================================
   // ÁREA DE IMPLEMENTACIÓN DEL ESTUDIANTE
   // =========================================================================
+ 
+  struct EstadoT{
+    ubicacion site;
+    bool zapatillas;
+    
+    bool operator==(const EstadoT &st) const {
+      return (site.f == st.site.f && site.c == st.site.c && 
+            site.brujula == st.site.brujula && zapatillas == st.zapatillas);
+    }
+    
+    bool operator<(const EstadoT &st) const {
+      if (site.f != st.site.f) return site.f < st.site.f;
+      if (site.c != st.site.c) return site.c < st.site.c;
+      if (site.brujula != st.site.brujula) return site.brujula < st.site.brujula;
+      return zapatillas < st.zapatillas;
+    }
+  };
+
+  struct NodoT{
+    EstadoT estado;
+    list<Action> secuencia;
+    int coste;
+    int h;
+
+    int f() const{
+      return coste + h;
+    }
+
+    bool operator==(const NodoT &node) const{
+      return (estado == node.estado);
+    }
+
+    bool operator<(const NodoT &node) const{
+      if(estado.site.f < node.estado.site.f) return true;
+      else if ( (estado.site.f == node.estado.site.f) && (estado.site.c < node.estado.site.c) ) return true;
+      else if ( ((estado.site.f == node.estado.site.f) && (estado.site.c == node.estado.site.c)) && (estado.site.brujula < node.estado.site.brujula) ) return true;
+      else if ( ((estado.site.f == node.estado.site.f) && (estado.site.c == node.estado.site.c)) && 
+                ((estado.site.brujula == node.estado.site.brujula) && (estado.zapatillas < node.estado.zapatillas)) ) return true;
+      else return false;
+    }
+  };
+
+  //Como la priority queue saca al mayor, creamos un functor para que sea min heap
+  struct ComparaCoste {
+    bool operator()(const NodoT &a, const NodoT &b) {
+      return a.f() > b.f(); 
+    }
+  };
+
+  list<Action> Busqueda_T(const EstadoT &inicio, const EstadoT &final, 
+                                 const vector<vector<unsigned char>> &terreno, 
+                                 const vector<vector<unsigned char>> &altura);
+/*
+  /** 
+   * @brief Primera aproximacion a la busqueda en anchura
+   * 
+   * @param inicio Estado Inicial de la busqueda.
+   * @param final Estado Final de la busqueda.
+   * @param terreno Matriz que contiene la informacion del terreno.
+   * @param altura Matriz que contiene la altura del mapa
+   * 
+   * @return La secuencia de acciones para llegar al estado final
+   * @note Devuelve un plan vacio si no es posible encontrar un plan valido
   
+  list<Action> B_Anchura(const EstadoT &inicio, const EstadoT &final, 
+                                 const vector<vector<unsigned char>> &terreno, 
+                                 const vector<vector<unsigned char>> &altura);
+
+  list<Action> B_Anchura_V2(const EstadoT &inicio, const EstadoT &final, 
+                                 const vector<vector<unsigned char>> &terreno, 
+                                 const vector<vector<unsigned char>> &altura);
+*/
 /**
  * @brief Comportamiento del técnico para el Nivel 0.
  * @param sensores Datos actuales de los sensores.
@@ -116,6 +200,13 @@ public:
  * @return Acción a realizar.
  */
   Action ComportamientoTecnicoNivel_6(Sensores sensores);
+
+/**
+ * @brief Comportamiento del técnico para el Nivel E (especial).
+ * @param sensores Datos actuales de los sensores.
+ * @return Acción a realizar.
+ */
+  Action ComportamientoTecnicoNivel_E(Sensores sensores);
 
 protected:
   // =========================================================================
@@ -187,8 +278,24 @@ private:
   // =========================================================================
   // VARIABLES DE ESTADO (PUEDEN SER EXTENDIDAS POR EL ALUMNO)
   // =========================================================================
+  Action last_action;
+  bool tiene_zapatillas;
+  EstadoT destino;
+  list<Action> plan;
+  bool hayPlan;
 
-  
+  // Nivel 5
+    enum EstadoFase { PARADO, EN_MARCHA, ORIENTANDOSE };
+    EstadoFase faseActual;
+
+    list<Action> accionesMov;
+    int destinoF, destinoC;
+    int fIngeniero, cIngeniero;
+    bool esperando_install;
+    set<pair<int,int>> visitadas;
+    int girosOrientacion;
+
+    list<Action> PlanificarMovimiento(int fO, int cO, int rO, int fD, int cD, int ingF, int ingC);
 };
-
+ 
 #endif

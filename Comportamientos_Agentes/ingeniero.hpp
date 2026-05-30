@@ -1,14 +1,16 @@
 #ifndef COMPORTAMIENTOINGENIERO_H
 #define COMPORTAMIENTOINGENIERO_H
 
-#include <chrono>
+#include <cstdlib>
+#include <vector>
 #include <list>
 #include <map>
 #include <set>
 #include <thread>
-#include <time.h>
 
 #include "comportamientos/comportamiento.hpp"
+
+using namespace std;
 
 class ComportamientoIngeniero : public Comportamiento {
 public:
@@ -21,7 +23,14 @@ public:
    * @param size Tamaño del mapa (si es 0, se inicializa más tarde)
    */
   ComportamientoIngeniero(unsigned int size = 0) : Comportamiento(size) {
-    // Inicializar Variables de Estado
+    last_action = IDLE;
+    tiene_zapatillas = false;
+
+    mapa_suficiente = false;
+
+    ultimas_posiciones = 0;
+    ultimaF = -1;
+    ultimaC = -1;
   }
 
   /**
@@ -32,7 +41,14 @@ public:
   ComportamientoIngeniero(std::vector<std::vector<unsigned char>> mapaR, 
                          std::vector<std::vector<unsigned char>> mapaC): 
                          Comportamiento(mapaR, mapaC) {
-    // Inicializar Variables de Estado
+    hayPlan = false;
+    tiene_zapatillas = false;
+    
+    planCalculado = false;
+    estadoActual = BUSCANDO_PLAN;
+    ultimaF = -1;
+    ultimaC = -1;
+    esperando_install = false;
   }
 
   ComportamientoIngeniero(const ComportamientoIngeniero &comport)
@@ -57,8 +73,114 @@ public:
   // ÁREA DE IMPLEMENTACIÓN DEL ESTUDIANTE
   // =========================================================================
 
+  struct EstadoI{
+    ubicacion site;
+    bool zapatillas;
+    
+    bool operator==(const EstadoI &st) const {
+      return (site.f == st.site.f && site.c == st.site.c && 
+            site.brujula == st.site.brujula && zapatillas == st.zapatillas);
+    }
+    
+    bool operator<(const EstadoI &st) const {
+      if (site.f != st.site.f) return site.f < st.site.f;
+      if (site.c != st.site.c) return site.c < st.site.c;
+      if (site.brujula != st.site.brujula) return site.brujula < st.site.brujula;
+      return zapatillas < st.zapatillas;
+    }
+  };
+
+  struct NodoI{
+    EstadoI estado;
+    list<Action> secuencia;
+    int coste;
+
+    bool operator==(const NodoI &node) const{
+      return (estado == node.estado);
+    }
+
+    bool operator<(const NodoI &node) const{
+      if(estado.site.f < node.estado.site.f) return true;
+      else if ( (estado.site.f == node.estado.site.f) && (estado.site.c < node.estado.site.c) ) return true;
+      else if ( ((estado.site.f == node.estado.site.f) && (estado.site.c == node.estado.site.c)) && (estado.site.brujula < node.estado.site.brujula) ) return true;
+      else if ( ((estado.site.f == node.estado.site.f) && (estado.site.c == node.estado.site.c)) && 
+                ((estado.site.brujula == node.estado.site.brujula) && (estado.zapatillas < node.estado.zapatillas)) ) return true;
+      else return false;
+    }
+  };
+
+  struct Paso{
+    int fil;
+    int col;
+    int op; //-1 bajar casilla, 0 dejar como esta, 1 subir casilla
+  };
+
+  struct EstadoPaso{
+    int f, c;
+    int altura;
+
+    bool operator<(const EstadoPaso &otro) const {
+      if (f != otro.f) return f < otro.f;
+      if (c != otro.c) return c < otro.c;
+      return altura < otro.altura;
+    }
+  };
+
+  struct NodoPaso {
+    EstadoPaso estado;
+    list<Paso> secuencia;
+    int energia;
+    int impacto;
+    int g;
+    int h;
+
+    int f() const { 
+      return g + h; 
+    }
+  };
+
+  struct ComparaCoste {
+  bool operator()(const NodoPaso &a, const NodoPaso &b) {
+    int f_a = a.f();
+    int f_b = b.f();
+
+    if (f_a != f_b) {
+      return f_a > f_b; 
+    }
+
+    return a.impacto > b.impacto;
+  }
+};
+
+   /** 
+   * @brief Busqueda en nivel 2
+   * 
+   * @param inicio Estado Inicial de la busqueda.
+   * @param final Estado Final de la busqueda.
+   * @param terreno Matriz que contiene la informacion del terreno.
+   * @param altura Matriz que contiene la altura del mapa
+   * 
+   * @return La secuencia de acciones para llegar al estado final
+   * @note Devuelve un plan vacio si no es posible encontrar un plan valido
+  */
+  list<Action> Busqueda_I(const EstadoI &inicio, const EstadoI &final, 
+                                 const vector<vector<unsigned char>> &terreno, 
+                                 const vector<vector<unsigned char>> &altura);
+
+   /** 
+   * @brief Busqueda en nivel 3
+   * 
+   * @param inicio Estado Inicial de la busqueda. 
+   * @param final Estado Final de la busqueda.
+   * @param terreno Matriz que contiene la informacion del terreno.
+   * @param altura Matriz que contiene la altura del mapa
+   * 
+   * @return La secuencia de pasos para llegar al estado final
+   * @note Devuelve un plan vacio si no es posible encontrar un plan valido
+  */
+  list<Paso> Busqueda_Plan_PasoI(Sensores sensores);
+
   // Funciones específicas para cada nivel (para ser implementadas por el alumno)
-  
   /**
    * @brief Implementación del Nivel 0.
    * @param sensores Datos actuales de los sensores del agente.
@@ -182,6 +304,45 @@ private:
   // =========================================================================
   // VARIABLES DE ESTADO (PUEDEN SER EXTENDIDAS POR EL ALUMNO)
   // =========================================================================
+  Action last_action;
+  bool tiene_zapatillas;
+  list<Action> plan;
+  bool hayPlan;
+  list<Paso> planTuberias;
+
+  
+  // Nivel 5
+  enum EstadoIng { 
+    BUSCANDO_PLAN, 
+    PREPARANDO_CASILLA, 
+    LLAMANDO_TECNICO,
+    MOVIENDOSE,
+    ORIENTANDOSE,
+    ESPERANDO_TECNICO
+  };
+  EstadoIng estadoActual;
+
+  // listas para guardar los datos
+  list<Paso> listaTuberias; 
+  list<Action> listaMovimiento;
+    
+  // posicion ingeniero
+  int ultimaF, ultimaC; 
+  bool planCalculado;
+  bool esperando_install;
+
+  // funciones de busqueda
+  list<Paso> PlanificarTuberias(int belF, int belC, int maxEco);
+  list<Action> BuscarCaminoBFS(int fO, int cO, int rO, int fD, int cD);
+
+  enum EstadoNivel6 { EXPLORANDO, PLANIFICANDO, EJECUTANDO };
+  EstadoNivel6 estadoNivel6;
+  set<pair<int,int>> visitadas;
+  bool mapa_suficiente;
+
+  // ====== DEBUG / ANTIBLOQUEO ======
+  int ultimas_posiciones;
+
 
 };
 

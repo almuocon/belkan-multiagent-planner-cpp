@@ -155,7 +155,7 @@ public:
   void notify() { mensaje = true; }
   bool hasToNotify() { return mensaje; }
   void setNotifyOff() { mensaje = false; }
-
+ 
   void setCompletoLosObjetivos() { completoLosObjetivos = true; }
   bool SeHanConseguidoLosObjetivos() { return completoLosObjetivos; }
 
