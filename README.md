@@ -1,28 +1,32 @@
 Simulación de Agentes Autónomos: Búsqueda y Navegación en C++
 
-Proyecto de Inteligencia Artificial desarrollado para la Universidad de Granada (ETSIIT).
-El software modela un entorno de simulación 2D/3D donde dos agentes colaborativos (Ingeniero y Técnico) deben tomar decisiones estratégicas, explorar mapas de orografía compleja y planificar rutas óptimas mediante algoritmos reactivos y deliberativos.
+Proyecto académico de la asignatura Inteligencia Artificial (curso 2025/2026), E.T.S. de Ingenierías Informática y de Telecomunicación (ETSIIT), Universidad de Granada.
+
+Créditos y Autoría del Software Base:
+El entorno de simulación, el motor gráfico 2D/3D en OpenGL y la estructura base del proyecto pertenecen al Departamento de Ciencias de la Computación e Inteligencia Artificial (CCIA) de la Universidad de Granada.
+
+Mi trabajo como estudiante se centra de forma exclusiva en el diseño e implementación del código contenido dentro de la carpeta Comportamientos_Agentes (archivos ingeniero.cpp, ingeniero.hpp, tecnico.cpp y tecnico.hpp).
+
+Estado del Desarrollo y Niveles:
+El proyecto formó parte de un proceso de aprendizaje continuo y no se encuentra completado al 100%:
+
+Nivel 2 y 3 (Completados y funcionales): Implementación con éxito de algoritmos de búsqueda deliberativa y pathfinding mediante el algoritmo A* con minimización de consumo de energía sobre orografía con desniveles.
+
+Nivel 4 (Funcional): Planificación topológica de canalizaciones de tuberías respetando restricciones de altura, desniveles y límites energéticos.
+
+Niveles 0, 1 y 5 (Parciales): Pruebas de comportamientos reactivos y coordinación básica entre agentes para la instalación simultánea de elementos.
+
+Nivel 6 (No implementado / Pendiente): Exploración y construcción en mapas completamente desconocidos sin completar.
 
 Tecnologías y Algoritmos:
 
-Lenguaje: C++ (C++11/17)
+Lenguaje: C++
 
-Algoritmos de Búsqueda: A* (Heurísticas guiadas por energía/distancia), Búsqueda en Grafos, Dijkstra.
+Algoritmos de Búsqueda: A* (Heurísticas guiadas por coste energético), Búsqueda en Grafos, Dijkstra.
 
-Técnicas de IA: Agentes deliberativos, agentes reactivos basados en sensores, gestión de estados y restricciones topológicas (cotas de terreno).
+Técnicas de IA: Agentes deliberativos, agentes reactivos basados en sensores, gestión de estados y restricciones topológicas.
 
 Entorno: Linux / CMake / OpenGL (FreeGLUT).
-
-Mi Contribución:
-Sobre la base del motor y simulador proporcionado por el departamento CCIA de la UGR, implementé la lógica de control de los agentes dentro de la carpeta Comportamientos_Agentes:
-
-Navegación Deliberativa Óptima: Diseño de algoritmos de búsqueda para resolver rutas en tiempo mínimo considerando restricciones de salto y desnivel.
-
-Minimización de Coste Energético (Algoritmo A*): Implementación de una heurística ponderada para que el agente planifique su trayectoria minimizando el gasto de batería sobre superficies irregulares (agua, hierba, senderos).
-
-Planificación Topológica de Recursos: Algoritmo para proyectar tramos de canalización respetando caída por gravedad y desniveles de cota.
-
-Exploración Reactiva: Procesamiento de sensores visuales cónicos para esquivar obstáculos y actualizar mapas dinámicamente.
 
 Compilación y Ejecución (Linux):
 
